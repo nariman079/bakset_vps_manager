@@ -1,8 +1,8 @@
 from rest_framework import serializers
 
-from src.models import Server
+from src.models import VPS
 
-class ServerCreateSerializer(serializers.ModelSerializer):
+class VPSCreateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Server
+        model = VPS
         
