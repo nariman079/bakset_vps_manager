@@ -1,11 +1,11 @@
 from rest_framework.viewsets import ViewSet
 from rest_framework.decorators import action
 
-from src.serializers.vps_manager_serializers import vpn
+from src.serializers.vps_manager_serializers import VPSCreateSerializer
 
 class ServerViewSet(ViewSet):
     authentication_classes = None
-    
+
 
     @action(methods=['POST'], detail=False)
     def create_server(self, request, *args, **kwargs):
@@ -13,7 +13,7 @@ class ServerViewSet(ViewSet):
         pass
     
     @action(methods=['PATCH'], detail=False)
-    def edit_server(self, request, *args, **args):
+    def edit_server(self, request, *args, **kwargs):
         """Изменение данных сервера"""
         pass
 
