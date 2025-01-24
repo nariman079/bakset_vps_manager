@@ -12,6 +12,10 @@ class VPS(models.Model):
         BLOCKED = 'blocked', 'Заблокирован'
         STOPPED = 'stopped', 'Остановлен'
 
+    class ServeOS(models.TextChoices):
+        ubuntu_v22_04 = 'ubuntu:22.04', "Ubuntu v22.04"
+        # @TODO Дополнить операционные системы
+
     uid = models.CharField(
         max_length=255, 
         unique=True, 
@@ -21,11 +25,11 @@ class VPS(models.Model):
         verbose_name="Количество ядер CPU",
         editable=False
     )
-    ram = models.PositiveIntegerField(
+    ram = models.FloatField(
         verbose_name="Объем RAM (ГБ)",
         editable=False
     )
-    hdd = models.PositiveIntegerField(
+    hdd = models.FloatField(
         verbose_name="Объем HDD (ГБ)",
         editable=False
     )
@@ -35,11 +39,21 @@ class VPS(models.Model):
         default='started',
         verbose_name="Статус сервера"
     )
-    server_password = models.CharField(
+    password = models.CharField(
         max_length=100,
+        editable=False,
         blank=True,
         null=True,
         verbose_name="Пароль от сервера"
+    ) # @TODO Сделать отправку пароля на почту после реализации MVP
+    public_ip = models.GenericIPAddressField(
+        max_length=50,
+        editable=False,        
+    ) 
+    server_os = models.CharField(
+        max_length=30, 
+        choices=ServeOS.choices,
+        default='ubuntu:22.04'
     )
 
     def __str__(self):
