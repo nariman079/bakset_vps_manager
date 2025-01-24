@@ -2,8 +2,9 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from src.serializers.vps_manager_serializers import VPSCreateSerializer, VPSStatusEditSerializer
-from src.services.vps_manager_services import VPSCreateSrv
+from src.serializers.vps_manager_serializers import VPSCreateSerializer, VPSStatusEditSerializer, VPSDetailSerializer
+from src.services.vps_manager_services import VPSCreateSrv, VPSStatusEditSrv
+from src.models import VPS
 
 class ServerViewSet(ViewSet):
     serializer_class = VPSCreateSerializer
@@ -17,7 +18,9 @@ class ServerViewSet(ViewSet):
 
     def list(self, request, *args, **kwargs):
         """Получение списка серверов"""
-        return Response()
+        queryset = VPS.objects.all()
+        vps_list = VPSDetailSerializer(instance=queryset, many=True)
+        return Response(vps_list.data)
 
     def retrieve(self, *args, **kwargs):
         """Получение детальной информации о сервере"""
@@ -28,4 +31,4 @@ class ServerViewSet(ViewSet):
         """Изменение данных сервера"""
         server_status = VPSStatusEditSerializer(data=request.data)
         server_status.is_valid(raise_exception=True)
-        return Response(data=server_status.data)
+        return VPSStatusEditSrv(uid, server_status.data).execute()

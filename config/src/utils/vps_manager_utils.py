@@ -19,7 +19,7 @@ def get_free_virtual_memory() -> float:
 
 def get_cpu_count(logical: bool = False) -> int:
     """Получение количество ядер или потоков"""
-    return sutil.cpu_count(logical=logical)
+    return psutil.cpu_count(logical=logical)
 
 
 def generate_password() -> str: 

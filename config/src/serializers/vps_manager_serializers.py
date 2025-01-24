@@ -7,11 +7,11 @@ class VPSStatusEditSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=VPS.Status.choices)
     
 class VPSCreateSerializer(serializers.Serializer):
-    hdd = serializers.IntegerField()
+    hdd = serializers.FloatField()
     cpu = serializers.IntegerField()
-    ram = serializers.IntegerField()
+    ram = serializers.FloatField()
     ssh_key = serializers.CharField(required=False)
-    server_password = serializers.CharField(required=False)
+    password = serializers.CharField(required=False)
 
     def validate_hdd(self, value):
         system_free_disk_space = get_free_disk_space_gb()
@@ -38,11 +38,11 @@ class VPSCreateSerializer(serializers.Serializer):
         return value
 
 class VPSDetailSerializer(serializers.Serializer):
-    hdd = serializers.IntegerField()
+    uid = serializers.CharField()
+    hdd = serializers.FloatField()
     cpu = serializers.IntegerField()
-    ram = serializers.IntegerField()
-    ssh_key = serializers.CharField()
-    server_password = serializers.CharField()
-    ip_address = serializers.CharField()
+    ram = serializers.FloatField()
+    password = serializers.CharField()
+    public_ip = serializers.IPAddressField()
     
         
