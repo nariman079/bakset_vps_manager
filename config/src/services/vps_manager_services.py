@@ -3,17 +3,28 @@ import uuid
 import random
 
 import docker
-from docker.errors import APIError
+from docker.errors import APIError, NotFound
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from rest_framework import status
 
+from src.models import VPS
+from src.services.docker_services import ServerManager, get_server_ip
 from src.utils.vps_manager_utils import generate_password
+
+
+
 
 NETWORK_NAME = 'vps_servers'
 IMAGE_NAME = "ubuntu:22.04"
 
 unique_ports = set()
 unique_ips = set()
+statuses_dict = {
+    'started': 'running',
+    'blocked': 'paused',
+    'stopped': 'paused'
+}
 
 def get_ip() -> str:
     """Получение IP для сервера"""
@@ -51,8 +62,8 @@ class VPSCreateSrv:
         self.ram = serializer_data['ram']
 
         self.ssh_key = serializer_data.get('ssh_key')
-        self.server_password = serializer_data.get('password', generate_password())
-        self.container_name = "server-" + str(uuid.uuid4())
+        self.server_password = serializer_data.get('server_password', generate_password())
+        self.container_name =  str(uuid.uuid4())
   
 
     def _create_network(self) -> None:
@@ -81,7 +92,10 @@ class VPSCreateSrv:
 
         command_list  = [
             "apt update && apt upgrade -y && ",
-            "apt-get update && apt-get install -y systemd && apt-get clean",
+            "apt-get update && apt-get install -y systemd && apt-get install -y wget && apt-get clean &&",
+            "wget https://github.com/tsl0922/ttyd/releases/download/1.7.4/ttyd.x86_64 && ",
+            "chmod +x ttyd.x86_64 && ",
+            "mv ttyd.x86_64 /usr/local/bin/ttyd &&",
             f"echo 'root:{self.server_password}' | chpasswd && ",
             "apt install -y openssh-server && ",
             'sed -i "s/#PermitRootLogin prohibit-password/PermitRootLogin yes/" /etc/ssh/sshd_config && ',
@@ -91,12 +105,12 @@ class VPSCreateSrv:
         if self.ssh_key:
             command_list.extend(
                 [
-                    
                     "chmod 600 /root/.ssh/authorized_keys &&",
                     f"echo '{self.ssh_key}' >> /root/.ssh/authorized_keys &&",
                 ]
             )
-        command_list.append("/bin/bash")
+        command_list.append(f"ttyd --credential root:{self.server_password} --writable -p 7681 bash")
+
         print(command_list)
         environment = [
             'DEBIAN_FRONTEND=noninteractive',
@@ -105,13 +119,14 @@ class VPSCreateSrv:
         self.server_params = dict(
             environment=environment,
             image=IMAGE_NAME,
-            command=f"bash -c '{''.join(command_list)}'",
+            entrypoint=["bash", "-c", ' '.join(command_list)],
+            command='/bin/bash',
             name=self.container_name,
             detach=True,
             tty=True,
-            network=NETWORK_NAME,  
+            network=self.network_name,  
             stdin_open=True,
-            ports={'22/tcp': get_port()},
+            ports={'22/tcp': get_port(), '7681': get_port()},
             init=True
         )
     
@@ -122,21 +137,83 @@ class VPSCreateSrv:
         except APIError as ex:
             return Response(exception=ex)
     
+    def _create_vps(self):
+        """Создание VPS в Базе"""
+        self.ip_address = get_server_ip(self.container_name)
+        try:
+            VPS.objects.create(
+                uid=self.container_name,
+                cpu=self.cpu,
+                hdd=self.hdd,
+                ram=self.ram,
+                password=self.server_password,
+                public_ip=self.ip_address           
+            )
+        except Exception as ex:
+            raise ValidationError(str(ex))
 
     def execute(self):
-        
         self._create_network()
         self._create_server_params()
         self._create_server()
-        network_settings = next(iter(self.server.attrs["NetworkSettings"]["Networks"].values()))
-        ip_address = network_settings["IPAddress"]
-
+        self._create_vps()
+        self.server_params.pop('command')
         return Response(
             status=status.HTTP_201_CREATED,
             data={
-                "ip":ip_address,
-                'password': self.server_password,
-                'networks': network_settings,
-                'server': self.server_params
+                "message":"Сервер создается и будет готов к работе через 60-90 секунд",
+                "data":{
+                    "ip":self.ip_address,
+                    'terminal_url': f"http://{self.ip_address}:7681/",
+                    'command_for_connect': f"ssh root@{self.ip_address}",
+                    'password': self.server_password,
+                    'server': self.server_params,
+                }
             }
         )
+
+class VPSStatusEditSrv:
+    def __init__(
+        self, 
+        uid: str,
+        serializer_data: OrderedDict
+    ) -> None:
+        self.uid = uid
+        self.new_status = serializer_data['status']
+        
+        try:
+            self.manager = ServerManager(server_uid=self.uid)
+        except NotFound:
+            raise ValidationError(detail={"uid": "Такого сервера нет в системе"})
+        
+    def _get_vps_object(self) -> None: 
+        """Получение объекта из базы данных"""
+        self.vps_object = VPS.objects.filter(uid=self.uid).first()
+        if not self.vps_object:
+            raise ValidationError(detail={"uid": "Такого сервера нет в базе"})
+
+    def _get_and_change_server_status(self) -> None: 
+        """Изменение статуса сервера"""
+        
+        match self.new_status:
+            case 'started':
+                self.manager.stop()
+            case 'blocked':
+                self.manager.lock()
+            case 'stopped':
+                self.manager.stop()
+        self.vps_object.status = self.new_status
+        self.vps_object.save()
+
+        return Response(
+            status=200,
+            data={
+                "message": f"Изменение статуса сервера на {self.vps_object.get_status_display()}"
+            }
+        )
+    
+    def execute(self) -> Response: 
+        self._get_vps_object()
+        self._get_server()
+
+        return Response(data=self.status)

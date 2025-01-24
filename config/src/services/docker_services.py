@@ -2,13 +2,11 @@ import docker
 from docker.errors import NotFound
 
 class ServerManager():
-    def __init__(self, server: str):
+    def __init__(self, server_uid: str):
         self.client = docker.from_env()
-        try:
-            self.server = self.client.containers.get(container_name)
-        except NotFound as ex:
-            raise ValueError(f"Такой контейнер не найден: {ex}")
-    
+        self.server = self.client.containers.get(server_uid)
+        
+
     def stop(self) -> None:
         self.server.stop()
 

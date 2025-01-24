@@ -25,11 +25,11 @@ class VPS(models.Model):
         verbose_name="Количество ядер CPU",
         editable=False
     )
-    ram = models.PositiveIntegerField(
+    ram = models.FloatField(
         verbose_name="Объем RAM (ГБ)",
         editable=False
     )
-    hdd = models.PositiveIntegerField(
+    hdd = models.FloatField(
         verbose_name="Объем HDD (ГБ)",
         editable=False
     )
@@ -46,13 +46,16 @@ class VPS(models.Model):
         null=True,
         verbose_name="Пароль от сервера"
     ) # @TODO Сделать отправку пароля на почту после реализации MVP
-    public_ip = models.CharField(
+    public_ip = models.GenericIPAddressField(
         max_length=50,
         editable=False,        
     ) 
-    name = models.CharField(
-        max_length=255
+    server_os = models.CharField(
+        max_length=30, 
+        choices=ServeOS.choices,
+        default='ubuntu:22.04'
     )
+
     def __str__(self):
         return f"Сервер {self.uid} (Статус: {self.status})"
 
