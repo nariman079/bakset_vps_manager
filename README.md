@@ -73,8 +73,8 @@
     "hdd": 1,
     "cpu": 1,
     "ram": 1,
-    "ssh_key": "ssh key",
-    "server_password": "1234",
+    "ssh_key": "ssh key", // Необязательное поле
+    "server_password": "1234", // Необязательное поле
 }
 ```
 #### Response
@@ -105,7 +105,7 @@
 #### Request Data
 ```json
 {
-    "status": "started"
+    "status": "started" // Варианты статуса (started, blocked, stopped)
 }
 ```
 #### Response
