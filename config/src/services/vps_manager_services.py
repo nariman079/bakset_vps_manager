@@ -202,6 +202,7 @@ class VPSStatusEditSrv:
                 self.manager.lock()
             case 'stopped':
                 self.manager.stop()
+                
         self.vps_object.status = self.new_status
         self.vps_object.save()
 
