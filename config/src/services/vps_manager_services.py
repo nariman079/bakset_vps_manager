@@ -101,8 +101,8 @@ class VPSCreateSrv:
         if self.ssh_key:
             self.command_list.extend(
                 [
-                    "chmod 600 /root/.ssh/authorized_keys",
-                    f"echo '{self.ssh_key}' >> /root/.ssh/authorized_keys",
+                    "mkdir /root/.ssh/",
+                    f"echo '{self.ssh_key}' > /root/.ssh/authorized_keys",
                 ]
             )
 
@@ -156,7 +156,7 @@ class VPSCreateSrv:
                 "message": "Сервер создается и будет готов к работе через 1-2мин",
                 "data": {
                     "ip": self.ip_address,
-                    "shh_connection": f"ssh root@{self.ip_address}",
+                    "ssh_connection": f"ssh root@{self.ip_address}",
                     "password": self.server_password,
                     "server": {"uid": self.container_name},
                 },
