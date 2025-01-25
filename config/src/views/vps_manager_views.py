@@ -1,6 +1,7 @@
 from rest_framework.viewsets import ViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.core.exceptions import FieldError
 
 from src.serializers.vps_manager_serializers import VPSCreateSerializer, VPSStatusEditSerializer, VPSDetailSerializer
 from src.services.vps_manager_services import VPSCreateSrv, VPSStatusEditSrv, get_vps_srv
@@ -18,8 +19,16 @@ class ServerViewSet(ViewSet):
 
     def list(self, request, *args, **kwargs):
         """Получение списка серверов"""
-        queryset = VPS.objects.all()
-        vps_list = VPSDetailSerializer(instance=queryset, many=True)
+        try:
+            query = {k:v for k,v in self.request.query_params.items()}
+            queryset = VPS.objects.filter(**query)
+            vps_list = VPSDetailSerializer(instance=queryset, many=True)
+        except FieldError as ex:
+            return Response(data={
+                'message': "Ошибка полей, проверьте query params",
+                'detail': str(ex)
+            })
+        print(self.request.query_params)
         return Response(vps_list.data)
 
     def retrieve(self, *args, **kwargs):

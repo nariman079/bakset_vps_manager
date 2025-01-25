@@ -162,7 +162,9 @@ class VPSCreateSrv:
                     "ip":self.ip_address,
                     'command_for_connect': f"ssh root@{self.ip_address}",
                     'password': self.server_password,
-                    'server': self.server_params,
+                    'server': {
+                        "uid": self.container_name
+                    },
                 }
             }
         )
@@ -197,6 +199,7 @@ class VPSStatusEditSrv:
                 self.manager.lock()
             case 'unblocked':
                 self.manager.unlock()
+                self.new_status = 'started'
             case 'stopped':
                 self.manager.stop()
 
