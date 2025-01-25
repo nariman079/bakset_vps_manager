@@ -88,9 +88,8 @@ class VPSCreateSrv:
 
         self.command_list  = [
             "apt update", "apt upgrade -y",
-            "apt-get update ",
+            "apt-get update",
             "apt-get install -y systemd",
-            "apt-get install -y wget",
             "apt-get clean",
             f"echo 'root:{self.server_password}' | chpasswd",
             "apt install -y openssh-server",
@@ -106,7 +105,6 @@ class VPSCreateSrv:
                 ]
             )
         
-        self.command_list.append(f"ttyd --credential root:{self.server_password} --writable -p 7681 bash")
         environment = [
             'DEBIAN_FRONTEND=noninteractive',
             'TZ=Europe/Moscow'
@@ -128,18 +126,11 @@ class VPSCreateSrv:
         """Создание сервера(контейнера)"""
         try:
             self.server = self.client.containers.run(**self.server_params)
-            
-            comma = self.server.exec_run(
+            self.server.exec_run(
                 f'sh -c "{" && ".join(self.command_list)}" ', 
                 user='root', 
                 detach=True
-            )
-            self.server.exec_run(
-                f"",
-                user="root",
-                detach=True
-            )
-            
+            ) 
         except APIError as ex:
             return Response(exception=ex)
     
@@ -169,7 +160,6 @@ class VPSCreateSrv:
                 "message":"Сервер создается и будет готов к работе через 60-90 секунд",
                 "data":{
                     "ip":self.ip_address,
-                    'terminal_url': f"http://{self.ip_address}:7681/",
                     'command_for_connect': f"ssh root@{self.ip_address}",
                     'password': self.server_password,
                     'server': self.server_params,
@@ -226,6 +216,7 @@ class VPSStatusEditSrv:
 
 
 def get_vps_srv(uid: str) -> Response:
+    """Получение VPS"""
     vps = VPS.objects.filter(uid=uid).values(
         'uid',
         'cpu',
