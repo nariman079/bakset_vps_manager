@@ -61,7 +61,7 @@ class VPSCreateSrv:
 
         self.ssh_key = serializer_data.get("ssh_key")
         self.server_password = serializer_data.get(
-            "server_password", generate_password()
+            "password", generate_password()
         )
         self.container_name = str(uuid.uuid4())
 
@@ -153,7 +153,7 @@ class VPSCreateSrv:
         return Response(
             status=status.HTTP_201_CREATED,
             data={
-                "message": "Сервер создается и будет готов к работе через 60-90 секунд",
+                "message": "Сервер создается и будет готов к работе через 1-2мин",
                 "data": {
                     "ip": self.ip_address,
                     "shh_connection": f"ssh root@{self.ip_address}",
