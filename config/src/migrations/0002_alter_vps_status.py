@@ -4,15 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('src', '0001_initial'),
+        ("src", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='vps',
-            name='status',
-            field=models.CharField(choices=[('started', 'Запущен'), ('blocked', 'Заблокирован'), ('unblocked', 'Разблокирован'), ('stopped', 'Остановлен')], default='started', max_length=20, verbose_name='Статус сервера'),
+            model_name="vps",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("started", "Запущен"),
+                    ("blocked", "Заблокирован"),
+                    ("unblocked", "Разблокирован"),
+                    ("stopped", "Остановлен"),
+                ],
+                default="started",
+                max_length=20,
+                verbose_name="Статус сервера",
+            ),
         ),
     ]
