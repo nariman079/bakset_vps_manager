@@ -20,11 +20,7 @@ IMAGE_NAME = "ubuntu:22.04"
 
 unique_ports = set()
 unique_ips = set()
-statuses_dict = {
-    'started': 'running',
-    'blocked': 'paused',
-    'stopped': 'paused'
-}
+
 
 def get_ip() -> str:
     """Получение IP для сервера"""

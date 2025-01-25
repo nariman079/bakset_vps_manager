@@ -26,7 +26,12 @@ class ServerViewSet(ViewSet):
         """Получение детальной информации о сервере"""
         if uid := kwargs.get('uid'):
             return get_vps_srv(uid=uid)
-        return Response()
+        return Response(
+            status=400,
+            data={
+                "Произошла ошибка"
+            }
+        )
 
     @action(methods=['PATCH'], detail=True)
     def change_status(self, request, uid, *args, **kwargs):
