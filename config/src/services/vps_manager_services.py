@@ -95,11 +95,7 @@ class VPSCreateSrv:
             "apt-get update ",
             "apt-get install -y systemd",
             "apt-get install -y wget",
-            "apt-get install -y iptables",
             "apt-get clean",
-            "wget https://github.com/tsl0922/ttyd/releases/download/1.7.4/ttyd.x86_64",
-            "chmod +x ttyd.x86_64",
-            "mv ttyd.x86_64 /usr/local/bin/ttyd",
             f"echo 'root:{self.server_password}' | chpasswd",
             "apt install -y openssh-server",
             'sed -i \'s|#PermitRootLogin prohibit-password|PermitRootLogin yes|\' /etc/ssh/sshd_config',
@@ -232,4 +228,26 @@ class VPSStatusEditSrv:
         self._get_vps_object()
         return self._get_and_change_server_status()
 
-        
+
+def get_vps_srv(uid: str) -> Response:
+    vps = VPS.objects.filter(uid=uid).values(
+        'uid',
+        'cpu',
+        'ram',
+        'hdd',
+        'status',
+        'password',
+        'public_ip',
+        'server_os'
+    ).first()
+
+    if not vps:
+        return Response(
+            status=404,
+            data={
+                "message": "Такого сервера нет в системе"
+            }
+        )
+    
+    return Response(data=vps)
+

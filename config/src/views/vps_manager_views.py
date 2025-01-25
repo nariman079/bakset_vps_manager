@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from src.serializers.vps_manager_serializers import VPSCreateSerializer, VPSStatusEditSerializer, VPSDetailSerializer
-from src.services.vps_manager_services import VPSCreateSrv, VPSStatusEditSrv
+from src.services.vps_manager_services import VPSCreateSrv, VPSStatusEditSrv, get_vps_srv
 from src.models import VPS
 
 class ServerViewSet(ViewSet):
@@ -24,6 +24,8 @@ class ServerViewSet(ViewSet):
 
     def retrieve(self, *args, **kwargs):
         """Получение детальной информации о сервере"""
+        if uid := kwargs.get('uid'):
+            return get_vps_srv(uid=uid)
         return Response()
 
     @action(methods=['PATCH'], detail=True)
