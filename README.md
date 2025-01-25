@@ -35,10 +35,8 @@
    ```
 3. **Выполните команды**:
    ```bash
-
    make run
     ```
-
 #### Для Ubuntu
 1. **Установите Docker Engine**:
    - Скачайте и установите Docker Engine с [официального сайта](https://docs.docker.com/engine/install/).
@@ -51,11 +49,10 @@
    ```
 3. **Выполните команды**:
    ```bash
-   make init
    make run
     ```
 
-После выполнения всех  иструкций у вас должен запуститься проект и вы можете перейти на страницу списка серверов http://localhost:8000/api/servers/
+После выполнения всех иструкций у вас должен запуститься проект и вы можете перейти на страницу списка серверов http://localhost:8000/api/servers/
 
 # Документация к API
 
@@ -68,13 +65,19 @@
 }
 ```
 #### Request Data
+Описание полей:
+- **hdd** (float): Физическая память для сервера. 
+- **cpu** (int): Количество ядер для сервера
+- **ram** (float): Оперативная память для сервера
+- **ssh_key** (str): Установка вашего ssh ключа, чтобы можно было подключиться к серверу без пароля
+- **server_password** : Установка вашего пароля для пользователя root
 ```json
 {
-    "hdd": 1, // 1gb
-    "cpu": 1, // 1gb
-    "ram": 1, // 1gb
-    "ssh_key": "ssh key", // Необязательное поле
-    "server_password": "1234", // Необязательное поле
+    "hdd": 1, 
+    "cpu": 1, 
+    "ram": 1, 
+    "ssh_key": "ssh key", 
+    "server_password": "1234", 
 }
 ```
 #### Response
@@ -84,12 +87,10 @@
     "message": "Сервер создается и будет готов к работе через 60-90 секунд",
     "data": {
         "ip": "46.200.0.2",
-        "web_terminal_url": "http://46.200.0.2:7681/",
         "shh_connection": "ssh root@46.200.0.2",
         "password": "gnyaR3OpOnQH",
         "server": {
-            "image": "ubuntu:22.04",
-            "name": "22a483b2-c9fc-4040-b9fa-bdccca2b50b0",
+            "uid": "22a483b2-c9fc-4040-b9fa-bdccca2b50b0",
         }
     }
 }
@@ -103,9 +104,14 @@
 }
 ```
 #### Request Data
+Доступные статусы:
+- **started** : Запуск сервера
+- **blocked** : Блокировка сервера, пользователи не смогут подключиться по ssh
+- **unblocked** : Разблокировка сервера, пользователям вновь доступно подключение по ssh
+- **stopped** : Полная остановка сервера
 ```json
 {
-    "status": "started" // Варианты статуса (started, blocked, stopped)
+    "status": "started" 
 }
 ```
 #### Response
@@ -115,24 +121,42 @@
     "message": "Статус сервера изменился на started"
 }
 ```
-## 3 - Получение списка серверов с возможность
-### `POST` /api/servers/{uid}/change_status/
-#### Headers
-```json
-{
-    "Content-Type": "application/json",
-}
-```
-#### Request Data
-```json
-{
-    "status": "started"
-}
-```
+## 3 - Получение списка серверов с возможность фильтрации
+### `GET` /api/servers/
+#### Request query params
+Поля для фильтрации:
+- **status**
+- **id**
+- **hdd**
+- **cpu**
+- **ram**
 #### Response
-##### 201
+##### 200
+```json
+[
+    {
+        "id": 1,
+        "uid": "9afd4061-b080-4955-8d9c-5767b724c63f",
+        "public_ip": "98.103.0.2",
+        "status": "started"
+    }
+]
+```
+
+## 4 - Получение детальной информации о сервере
+### `GET` /api/servers/{uid}
+#### Response
+##### 200
 ```json
 {
-    "message": "Ваш сервер запускается и будет готов через 15-20 секунд"
+    "id": 1,
+    "uid": "9afd4061-b080-4955-8d9c-5767b724c63f",
+    "hdd": 1.0,
+    "cpu": 1,
+    "ram": 0.1,
+    "password": "TFL3negFVAF5",
+    "public_ip": "98.103.0.2",
+    "server_os": "ubuntu:22.04",
+    "status": "started"
 }
 ```

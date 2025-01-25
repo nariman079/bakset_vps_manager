@@ -40,11 +40,6 @@ class VPSCreateSerializer(serializers.Serializer):
 class VPSDetailSerializer(serializers.Serializer):
     id = serializers.CharField()
     uid = serializers.CharField()
-    hdd = serializers.FloatField()
-    cpu = serializers.IntegerField()
-    ram = serializers.FloatField()
-    password = serializers.CharField()
     public_ip = serializers.IPAddressField()
-    server_os = serializers.CharField()
     status = serializers.CharField()
-        
+

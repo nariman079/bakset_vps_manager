@@ -160,7 +160,7 @@ class VPSCreateSrv:
                 "message":"Сервер создается и будет готов к работе через 60-90 секунд",
                 "data":{
                     "ip":self.ip_address,
-                    'command_for_connect': f"ssh root@{self.ip_address}",
+                    'shh_connection': f"ssh root@{self.ip_address}",
                     'password': self.server_password,
                     'server': {
                         "uid": self.container_name
