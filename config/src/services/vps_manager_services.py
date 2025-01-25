@@ -71,7 +71,7 @@ class VPSCreateSrv:
         self.network_name = f"{NETWORK_NAME}-{uuid.uuid4()}"
 
         ip = get_ip()
-
+        self.ip_address = f"{ip}.0.2"
         self.network = self.client.networks.create(
             name=self.network_name,
             driver='bridge',
@@ -90,28 +90,31 @@ class VPSCreateSrv:
         if not self.network:
             raise ValueError("Сеть Docker не настроена")
 
-        command_list  = [
-            "apt update && apt upgrade -y && ",
-            "apt-get update && apt-get install -y systemd && apt-get install -y wget && apt-get clean &&",
-            "wget https://github.com/tsl0922/ttyd/releases/download/1.7.4/ttyd.x86_64 && ",
-            "chmod +x ttyd.x86_64 && ",
-            "mv ttyd.x86_64 /usr/local/bin/ttyd &&",
-            f"echo 'root:{self.server_password}' | chpasswd && ",
-            "apt install -y openssh-server && ",
-            'sed -i "s/#PermitRootLogin prohibit-password/PermitRootLogin yes/" /etc/ssh/sshd_config && ',
-            "service ssh restart && ",
+        self.command_list  = [
+            "apt update", "apt upgrade -y",
+            "apt-get update ",
+            "apt-get install -y systemd",
+            "apt-get install -y wget",
+            "apt-get install -y iptables",
+            "apt-get clean",
+            "wget https://github.com/tsl0922/ttyd/releases/download/1.7.4/ttyd.x86_64",
+            "chmod +x ttyd.x86_64",
+            "mv ttyd.x86_64 /usr/local/bin/ttyd",
+            f"echo 'root:{self.server_password}' | chpasswd",
+            "apt install -y openssh-server",
+            'sed -i \'s|#PermitRootLogin prohibit-password|PermitRootLogin yes|\' /etc/ssh/sshd_config',
+            "service ssh restart",
         ]
         
         if self.ssh_key:
-            command_list.extend(
+            self.command_list.extend(
                 [
-                    "chmod 600 /root/.ssh/authorized_keys &&",
-                    f"echo '{self.ssh_key}' >> /root/.ssh/authorized_keys &&",
+                    "chmod 600 /root/.ssh/authorized_keys",
+                    f"echo '{self.ssh_key}' >> /root/.ssh/authorized_keys",
                 ]
             )
-        command_list.append(f"ttyd --credential root:{self.server_password} --writable -p 7681 bash")
-
-        print(command_list)
+        
+        self.command_list.append(f"ttyd --credential root:{self.server_password} --writable -p 7681 bash")
         environment = [
             'DEBIAN_FRONTEND=noninteractive',
             'TZ=Europe/Moscow'
@@ -119,7 +122,6 @@ class VPSCreateSrv:
         self.server_params = dict(
             environment=environment,
             image=IMAGE_NAME,
-            entrypoint=["bash", "-c", ' '.join(command_list)],
             command='/bin/bash',
             name=self.container_name,
             detach=True,
@@ -134,12 +136,23 @@ class VPSCreateSrv:
         """Создание сервера(контейнера)"""
         try:
             self.server = self.client.containers.run(**self.server_params)
+            
+            comma = self.server.exec_run(
+                f'sh -c "{" && ".join(self.command_list)}" ', 
+                user='root', 
+                detach=True
+            )
+            self.server.exec_run(
+                f"",
+                user="root",
+                detach=True
+            )
+            
         except APIError as ex:
             return Response(exception=ex)
     
     def _create_vps(self):
         """Создание VPS в Базе"""
-        self.ip_address = get_server_ip(self.container_name)
         try:
             VPS.objects.create(
                 uid=self.container_name,
@@ -197,12 +210,14 @@ class VPSStatusEditSrv:
         
         match self.new_status:
             case 'started':
-                self.manager.stop()
+                self.manager.start()
             case 'blocked':
                 self.manager.lock()
+            case 'unblocked':
+                self.manager.unlock()
             case 'stopped':
                 self.manager.stop()
-                
+
         self.vps_object.status = self.new_status
         self.vps_object.save()
 
@@ -215,6 +230,6 @@ class VPSStatusEditSrv:
     
     def execute(self) -> Response: 
         self._get_vps_object()
-        self._get_server()
+        return self._get_and_change_server_status()
 
-        return Response(data=self.status)
+        

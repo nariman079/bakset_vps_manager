@@ -10,11 +10,12 @@ class VPS(models.Model):
     class Status(models.TextChoices):
         STARTED = 'started', 'Запущен'
         BLOCKED = 'blocked', 'Заблокирован'
+        UNBLOCKED = 'unblocked', "Разблокирован"
         STOPPED = 'stopped', 'Остановлен'
 
     class ServeOS(models.TextChoices):
         ubuntu_v22_04 = 'ubuntu:22.04', "Ubuntu v22.04"
-        # @TODO Дополнить операционные системы
+        # @TODO Добавить операционные системы
 
     uid = models.CharField(
         max_length=255, 
@@ -45,7 +46,7 @@ class VPS(models.Model):
         blank=True,
         null=True,
         verbose_name="Пароль от сервера"
-    ) # @TODO Сделать отправку пароля на почту после реализации MVP
+    ) # @TODO Сделать отправку пароля на почту 
     public_ip = models.GenericIPAddressField(
         max_length=50,
         editable=False,        
